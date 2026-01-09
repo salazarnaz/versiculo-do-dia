@@ -11,8 +11,7 @@ export default {
       { nome: "Romanos", caps: 16 }
     ];
 
-    const now = new Date();
-    const slot = Math.floor(now.getTime() / (ROTATE_EVERY_HOURS * 60 * 60 * 1000));
+    const slot = Math.floor(Date.now() / (ROTATE_EVERY_HOURS * 60 * 60 * 1000));
 
     let seed = 0;
     for (const c of String(slot)) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
@@ -36,7 +35,7 @@ export default {
       const resp = await fetch(url);
       const data = await resp.json();
       texto = data?.results?.[0]?.text?.trim() || null;
-    } catch (e) {
+    } catch {
       texto = null;
     }
 
@@ -44,13 +43,9 @@ export default {
       texto = "Confia no Senhor de todo o teu coração, e Ele dirigirá teus caminhos.";
     }
 
-    const saida = {
-      referencia,
-      texto
-    };
-
-    return new Response(JSON.stringify(saida, null, 2), {
-      headers: { "Content-Type": "application/json; charset=utf-8" }
+    // Retorna apenas JSON limpo
+    return new Response(JSON.stringify({ referencia, texto }), {
+      headers: { "Content-Type": "application/json" }
     });
   }
 };
