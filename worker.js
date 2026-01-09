@@ -1,7 +1,7 @@
 export default {
   async fetch(request) {
     const ROTATE_EVERY_HOURS = 24;
-
+ 
     const livros = [
       { nome: "Salmos", caps: 150 },
       { nome: "Provérbios", caps: 31 },
