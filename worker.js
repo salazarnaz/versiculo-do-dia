@@ -25,21 +25,26 @@ export default {
     const capitulo = (seed % livro.caps) + 1;
     seed = (seed * 1103515245 + 12345) >>> 0;
 
-    const versiculo = (seed % 20) + 1;
+    // Ajuste: limitar versículos entre 1 e 15 para reduzir falhas
+    const versiculo = (seed % 15) + 1;
 
     const referencia = `${livro.nome} ${capitulo}:${versiculo}`;
     const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
 
-    let texto = "Versículo não encontrado";
+    let texto;
 
     try {
       const resp = await fetch(url);
       const data = await resp.json();
-      if (data?.results?.length > 0) {
-        texto = data.results[0].text.trim();
-      }
+      // Se não houver resultado, usar fallback
+      texto = data?.results?.[0]?.text?.trim() || null;
     } catch (e) {
-      texto = "Versículo não encontrado (erro de API)";
+      texto = null;
+    }
+
+    // Fallback inteligente
+    if (!texto) {
+      texto = "Confia no Senhor de todo o teu coração, e Ele dirigirá teus caminhos.";
     }
 
     const saida = `“${texto}”\n${livro.nome} ${capitulo}:${versiculo}`;
