@@ -43,6 +43,7 @@ export default {
       texto = "Confia no Senhor de todo o teu coração, e Ele dirigirá teus caminhos.";
     }
 
+    // Retorna JSON **compacto**, sem quebras de linha ou espaços
     return new Response(JSON.stringify({ referencia, texto }), {
       headers: { "Content-Type": "application/json" }
     });
