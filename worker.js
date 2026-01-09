@@ -1,6 +1,6 @@
 export default {
   async fetch(request) {
-    const ROTATE_EVERY_HOURS = 24;
+    const MAX_TENTATIVAS = 5;
 
     const livros = [
       { nome: "Salmos", caps: 150 },
@@ -11,40 +11,56 @@ export default {
       { nome: "Romanos", caps: 16 }
     ];
 
-    const slot = Math.floor(Date.now() / (ROTATE_EVERY_HOURS * 60 * 60 * 1000));
+    // 📅 Data do calendário (UTC)
+    const now = new Date();
+    const dayKey = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-${now.getUTCDate()}`;
 
+    // Seed determinística baseada no dia
     let seed = 0;
-    for (const c of String(slot)) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+    for (const c of dayKey) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
 
-    const rand = (max) => seed % max;
+    const next = (max) => {
+      seed = (seed * 1103515245 + 12345) >>> 0;
+      return seed % max;
+    };
 
-    const livro = livros[rand(livros.length)];
-    seed = (seed * 1103515245 + 12345) >>> 0;
+    let referencia = null;
+    let texto = null;
 
-    const capitulo = (seed % livro.caps) + 1;
-    seed = (seed * 1103515245 + 12345) >>> 0;
+    for (let i = 0; i < MAX_TENTATIVAS; i++) {
+      const livro = livros[next(livros.length)];
+      const capitulo = next(livro.caps) + 1;
+      const versiculo = next(20) + 1;
 
-    const versiculo = (seed % 15) + 1;
+      referencia = `${livro.nome} ${capitulo}:${versiculo}`;
+      const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
 
-    const referencia = `${livro.nome} ${capitulo}:${versiculo}`;
-    const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
 
-    let texto;
+        const entry = data?.results && Object.values(data.results)[0];
+        texto = entry?.text?.trim();
 
-    try {
-      const resp = await fetch(url);
-      const data = await resp.json();
-      texto = data?.results?.[0]?.text?.trim() || null;
-    } catch {
-      texto = null;
+        if (texto) break;
+      } catch {
+        // tenta novamente
+      }
     }
 
+    // Fallback final
     if (!texto) {
-      texto = "Confia no Senhor de todo o teu coração, e Ele dirigirá teus caminhos.";
+      referencia = "Provérbios 3:5";
+      texto = "Confia no Senhor de todo o teu coração, e não te estribes no teu próprio entendimento.";
     }
 
-    return new Response(JSON.stringify({ referencia, texto }), {
-      headers: { "Content-Type": "application/json" }
-    });
+    return new Response(
+      JSON.stringify({
+        data: dayKey,
+        referencia,
+        texto
+      }),
+      { headers: { "Content-Type": "application/json" } }
+    );
   }
 };
