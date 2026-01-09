@@ -1,0 +1,4 @@
+name = "versiculo-do-dia"
+type = "javascript"
+compatibility_date = "2026-01-09"
+main = "worker.js"
