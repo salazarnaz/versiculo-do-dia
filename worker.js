@@ -25,8 +25,7 @@ export default {
     const capitulo = (seed % livro.caps) + 1;
     seed = (seed * 1103515245 + 12345) >>> 0;
 
-    // Ajuste: limitar versículos entre 1 e 15 para reduzir falhas
-    const versiculo = (seed % 15) + 1;
+    const versiculo = (seed % 15) + 1; // limite seguro
 
     const referencia = `${livro.nome} ${capitulo}:${versiculo}`;
     const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
@@ -36,21 +35,22 @@ export default {
     try {
       const resp = await fetch(url);
       const data = await resp.json();
-      // Se não houver resultado, usar fallback
       texto = data?.results?.[0]?.text?.trim() || null;
     } catch (e) {
       texto = null;
     }
 
-    // Fallback inteligente
     if (!texto) {
       texto = "Confia no Senhor de todo o teu coração, e Ele dirigirá teus caminhos.";
     }
 
-    const saida = `“${texto}”\n${livro.nome} ${capitulo}:${versiculo}`;
+    const saida = {
+      referencia,
+      texto
+    };
 
-    return new Response(saida, {
-      headers: { "Content-Type": "text/plain; charset=utf-8" }
+    return new Response(JSON.stringify(saida, null, 2), {
+      headers: { "Content-Type": "application/json; charset=utf-8" }
     });
   }
 };
