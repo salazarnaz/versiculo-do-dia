@@ -1,7 +1,6 @@
 export default {
   async fetch(request) {
     const ROTATE_EVERY_HOURS = 24;
-
     const livros = [
       { nome: "Salmos", caps: 150 },
       { nome: "Provérbios", caps: 31 },
@@ -12,18 +11,14 @@ export default {
     ];
 
     const slot = Math.floor(Date.now() / (ROTATE_EVERY_HOURS * 60 * 60 * 1000));
-
     let seed = 0;
     for (const c of String(slot)) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
-
     const rand = (max) => seed % max;
 
     const livro = livros[rand(livros.length)];
     seed = (seed * 1103515245 + 12345) >>> 0;
-
     const capitulo = (seed % livro.caps) + 1;
     seed = (seed * 1103515245 + 12345) >>> 0;
-
     const versiculo = (seed % 15) + 1;
 
     const referencia = `${livro.nome} ${capitulo}:${versiculo}`;
@@ -43,9 +38,9 @@ export default {
       texto = "Confia no Senhor de todo o teu coração, e Ele dirigirá teus caminhos.";
     }
 
-    // Retorna JSON **compacto**, sem quebras de linha ou espaços
-    return new Response(JSON.stringify({ referencia, texto }), {
-      headers: { "Content-Type": "application/json" }
+    // Retorna apenas o texto puro
+    return new Response(texto, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" }
     });
   }
 };
