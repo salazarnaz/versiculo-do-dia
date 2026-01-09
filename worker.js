@@ -1,7 +1,7 @@
 export default {
   async fetch(request) {
     const ROTATE_EVERY_HOURS = 24;
- 
+
     const livros = [
       { nome: "Salmos", caps: 150 },
       { nome: "Provérbios", caps: 31 },
@@ -43,7 +43,6 @@ export default {
       texto = "Confia no Senhor de todo o teu coração, e Ele dirigirá teus caminhos.";
     }
 
-    // Retorna apenas JSON limpo
     return new Response(JSON.stringify({ referencia, texto }), {
       headers: { "Content-Type": "application/json" }
     });
