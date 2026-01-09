@@ -25,7 +25,7 @@ export default {
     const capitulo = (seed % livro.caps) + 1;
     seed = (seed * 1103515245 + 12345) >>> 0;
 
-    const versiculo = (seed % 15) + 1; // limite seguro
+    const versiculo = (seed % 15) + 1;
 
     const referencia = `${livro.nome} ${capitulo}:${versiculo}`;
     const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
