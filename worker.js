@@ -16,8 +16,11 @@ export default {
     const dayKey = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-${now.getUTCDate()}`;
 
     // Seed determinística baseada no dia
-    let seed = 0;
+   let seed = now.getUTCFullYear() + now.getUTCMonth() + now.getUTCDate();
     for (const c of dayKey) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+
+    const dayKey = now.toISOString().split('T')[0]; // formata para YYYY-MM-DD
+let seed = parseInt(dayKey.replace(/-/g, ''), 10); // Converte a data em um número
 
     const next = (max) => {
       seed = (seed * 1103515245 + 12345) >>> 0;
