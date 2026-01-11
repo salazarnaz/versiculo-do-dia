@@ -1,6 +1,6 @@
 export default {
   async fetch(request) {
-    const MAX_TENTATIVAS = 5;
+    const MAX_TENTATIVAS = 5; 
 
     const livros = [
       { nome: "Salmos", caps: 150 },
