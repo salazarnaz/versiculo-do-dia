@@ -1,6 +1,6 @@
 export default {
   async fetch(request) {
-    const MAX_TENTATIVAS = 5; 
+    const MAX_TENTATIVAS = 5;
 
     const livros = [
       { nome: "Salmos", caps: 150 },
@@ -11,17 +11,14 @@ export default {
       { nome: "Romanos", caps: 16 }
     ];
 
-    // 📅 Data do calendário (UTC)
+    // Data do calendário (UTC) e chave do dia YYYY-MM-DD
     const now = new Date();
-    const dayKey = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-${now.getUTCDate()}`;
+    const dayKey = now.toISOString().split('T')[0];
 
-    // Seed determinística baseada no dia
-   let seed = now.getUTCFullYear() + now.getUTCMonth() + now.getUTCDate();
-    for (const c of dayKey) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+    // Semente determinística baseada na data (YYYYMMDD)
+    let seed = parseInt(dayKey.replace(/-/g, ''), 10);
 
-    const dayKey = now.toISOString().split('T')[0]; // formata para YYYY-MM-DD
-let seed = parseInt(dayKey.replace(/-/g, ''), 10); // Converte a data em um número
-
+    // PRNG simples (LCG)
     const next = (max) => {
       seed = (seed * 1103515245 + 12345) >>> 0;
       return seed % max;
@@ -39,15 +36,17 @@ let seed = parseInt(dayKey.replace(/-/g, ''), 10); // Converte a data em um núm
       const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
 
       try {
-        const resp = await fetch(url);
-        const data = await resp.json();
+        const resp = await fetch(url, { cf: { cacheTtl: 300 } });
+        if (!resp.ok) throw new Error(`status ${resp.status}`);
 
+        const data = await resp.json();
+        // Ajuste para o formato retornado pela API
         const entry = data?.results && Object.values(data.results)[0];
         texto = entry?.text?.trim();
 
         if (texto) break;
-      } catch {
-        // tenta novamente
+      } catch (err) {
+        // falha nesta tentativa, continua para a próxima
       }
     }
 
@@ -57,13 +56,13 @@ let seed = parseInt(dayKey.replace(/-/g, ''), 10); // Converte a data em um núm
       texto = "Confia no Senhor de todo o teu coração, e não te estribes no teu próprio entendimento.";
     }
 
-    return new Response(
-      JSON.stringify({
-        data: dayKey,
-        referencia,
-        texto
-      }),
-      { headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({
+      data: dayKey,
+      referencia,
+      texto
+    }), {
+      headers: { "Content-Type": "application/json" }
+    });
   }
 };
+
