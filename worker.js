@@ -1,7 +1,7 @@
 export default {
   async fetch() {
     const MAX_TENTATIVAS = 5;
-    const VERSION = "arc"; // change if you want (e.g., "ra", "nvi")
+    const VERSION = "acf"; // change if you want (e.g., "ra", "nvi")
 
     const livros = [
       { nome: "Salmos", caps: 150, abrev: "sl" },
@@ -51,3 +51,30 @@ export default {
 
         // Common response has: { text: "...", ... }
         texto =
+          (typeof data?.text === "string" && data.text.trim()) ||
+          (typeof data?.verse?.text === "string" && data.verse.text.trim()) ||
+          (typeof data?.verses?.[0]?.text === "string" && data.verses[0].text.trim()) ||
+          null;
+
+        if (texto) {
+          return new Response(JSON.stringify({ referencia, texto }), {
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+      } catch (err) {
+        return new Response(JSON.stringify({ referencia, error: err.message }), {
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    if (!texto) {
+      referencia = "Provérbios 3:5";
+      texto = "Erro";
+    }
+
+    return new Response(JSON.stringify({ data: dayKey, referencia, texto }), {
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+};
