@@ -1,7 +1,6 @@
 export default {
-  async fetch(request) {
+  async fetch() {
     const MAX_TENTATIVAS = 5;
-
     const livros = [
       { nome: "Salmos", caps: 150 },
       { nome: "Provérbios", caps: 31 },
@@ -11,16 +10,16 @@ export default {
       { nome: "Romanos", caps: 16 }
     ];
 
-    // Data do calendário (UTC) e chave do dia YYYY-MM-DD
+    // Data em UTC YYYY-MM-DD
     const now = new Date();
-    const dayKey = now.toISOString().split('T')[0];
+    const dayKey = now.toISOString().slice(0, 10);
 
-    // Semente determinística baseada na data (YYYYMMDD)
+    // seed determinística baseada na data (YYYYMMDD)
     let seed = parseInt(dayKey.replace(/-/g, ''), 10);
 
-    // PRNG simples (LCG)
+    // LCG PRNG
     const next = (max) => {
-      seed = (seed * 1103515245 + 12345) >>> 0;
+      seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed % max;
     };
 
@@ -30,39 +29,32 @@ export default {
     for (let i = 0; i < MAX_TENTATIVAS; i++) {
       const livro = livros[next(livros.length)];
       const capitulo = next(livro.caps) + 1;
-      const versiculo = next(20) + 1;
+      // escolhe versículo entre 1 e 40 (ajuste se quiser outro limite)
+      const versiculo = next(40) + 1;
 
       referencia = `${livro.nome} ${capitulo}:${versiculo}`;
       const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
 
       try {
-        const resp = await fetch(url, { cf: { cacheTtl: 300 } });
+        const resp = await fetch(url);
         if (!resp.ok) throw new Error(`status ${resp.status}`);
-
         const data = await resp.json();
-        // Ajuste para o formato retornado pela API
+
         const entry = data?.results && Object.values(data.results)[0];
         texto = entry?.text?.trim();
-
         if (texto) break;
-      } catch (err) {
-        // falha nesta tentativa, continua para a próxima
+      } catch {
+        // tenta novamente
       }
     }
 
-    // Fallback final
     if (!texto) {
       referencia = "Provérbios 3:5";
       texto = "Confia no Senhor de todo o teu coração, e não te estribes no teu próprio entendimento.";
     }
 
-    return new Response(JSON.stringify({
-      data: dayKey,
-      referencia,
-      texto
-    }), {
+    return new Response(JSON.stringify({ data: dayKey, referencia, texto }), {
       headers: { "Content-Type": "application/json" }
     });
   }
 };
-
