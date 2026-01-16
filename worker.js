@@ -50,7 +50,7 @@ export default {
 
     if (!texto) {
       referencia = "Provérbios 3:5";
-      texto = "Confia no Senhor de todo o teu coração, e não te estribes no teu próprio entendimento.";
+      texto = "Erro";
     }
 
     return new Response(JSON.stringify({ data: dayKey, referencia, texto }), {
