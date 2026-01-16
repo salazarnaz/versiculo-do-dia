@@ -1,85 +1,19 @@
 export default {
   async fetch() {
     const MAX_TENTATIVAS = 5;
+    const VERSION = "acf"; // change if you want: "ra", "nvi", etc.
+
     const livros = [
-      // 📜 Antigo Testamento
-      { nome: "Gênesis", caps: 50 },
-      { nome: "Êxodo", caps: 40 },
-      { nome: "Levítico", caps: 27 },
-      { nome: "Números", caps: 36 },
-      { nome: "Deuteronômio", caps: 34 },
-      { nome: "Josué", caps: 24 },
-      { nome: "Juízes", caps: 21 },
-      { nome: "Rute", caps: 4 },
-      { nome: "1 Samuel", caps: 31 },
-      { nome: "2 Samuel", caps: 24 },
-      { nome: "1 Reis", caps: 22 },
-      { nome: "2 Reis", caps: 25 },
-      { nome: "1 Crônicas", caps: 29 },
-      { nome: "2 Crônicas", caps: 36 },
-      { nome: "Esdras", caps: 10 },
-      { nome: "Neemias", caps: 13 },
-      { nome: "Ester", caps: 10 },
-      { nome: "Jó", caps: 42 },
       { nome: "Salmos", caps: 150 },
       { nome: "Provérbios", caps: 31 },
-      { nome: "Eclesiastes", caps: 12 },
-      { nome: "Cânticos", caps: 8 },
       { nome: "Isaías", caps: 66 },
-      { nome: "Jeremias", caps: 52 },
-      { nome: "Lamentações", caps: 5 },
-      { nome: "Ezequiel", caps: 48 },
-      { nome: "Daniel", caps: 12 },
-      { nome: "Oséias", caps: 14 },
-      { nome: "Joel", caps: 3 },
-      { nome: "Amós", caps: 9 },
-      { nome: "Obadias", caps: 1 },
-      { nome: "Jonas", caps: 4 },
-      { nome: "Miquéias", caps: 7 },
-      { nome: "Naum", caps: 3 },
-      { nome: "Habacuque", caps: 3 },
-      { nome: "Sofonias", caps: 3 },
-      { nome: "Ageu", caps: 2 },
-      { nome: "Zacarias", caps: 14 },
-      { nome: "Malaquias", caps: 4 },
-    
-      // 📖 Novo Testamento
       { nome: "Mateus", caps: 28 },
-      { nome: "Marcos", caps: 16 },
-      { nome: "Lucas", caps: 24 },
       { nome: "João", caps: 21 },
-      { nome: "Atos", caps: 28 },
-      { nome: "Romanos", caps: 16 },
-      { nome: "1 Coríntios", caps: 16 },
-      { nome: "2 Coríntios", caps: 13 },
-      { nome: "Gálatas", caps: 6 },
-      { nome: "Efésios", caps: 6 },
-      { nome: "Filipenses", caps: 4 },
-      { nome: "Colossenses", caps: 4 },
-      { nome: "1 Tessalonicenses", caps: 5 },
-      { nome: "2 Tessalonicenses", caps: 3 },
-      { nome: "1 Timóteo", caps: 6 },
-      { nome: "2 Timóteo", caps: 4 },
-      { nome: "Tito", caps: 3 },
-      { nome: "Filemom", caps: 1 },
-      { nome: "Hebreus", caps: 13 },
-      { nome: "Tiago", caps: 5 },
-      { nome: "1 Pedro", caps: 5 },
-      { nome: "2 Pedro", caps: 3 },
-      { nome: "1 João", caps: 5 },
-      { nome: "2 João", caps: 1 },
-      { nome: "3 João", caps: 1 },
-      { nome: "Judas", caps: 1 },
-      { nome: "Apocalipse", caps: 22 }
+      { nome: "Romanos", caps: 16 }
     ];
 
     const now = new Date();
-    const dayKey = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "America/New_York",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).format(now);
+    const dayKey = now.toISOString().slice(0, 10);
 
     let seed = parseInt(dayKey.replace(/-/g, ""), 10);
 
@@ -87,6 +21,27 @@ export default {
       seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed % max;
     };
+
+    // --- NEW: load ABibliaDigital books once per request, then map name -> abbrev.pt
+    let booksIndex = null;
+    try {
+      const booksResp = await fetch("https://www.abibliadigital.com.br/api/books");
+      if (!booksResp.ok) throw new Error(`Books HTTP ${booksResp.status}`);
+      const books = await booksResp.json();
+
+      // Build a lookup: normalized name -> abbrev.pt (e.g., "salmos" -> "sl")
+      booksIndex = new Map(
+        (books || []).map((b) => [
+          normalize(b?.name),
+          b?.abbrev?.pt
+        ])
+      );
+    } catch (err) {
+      // If books endpoint fails, we can’t reliably map abbreviations.
+      return new Response(JSON.stringify({ error: `Failed to load books: ${err.message}` }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
 
     let referencia = null;
     let texto = null;
@@ -96,12 +51,16 @@ export default {
       const capitulo = next(livro.caps) + 1;
       const versiculo = next(40) + 1;
 
-      // Use the random reference (or temporarily hardcode if you want to test)
-      referencia = `${livro.nome} ${capitulo}:${versiculo}`;
-      // referencia = "Provérbios 3:5"; // <- test line if you want
+      const abbrev = booksIndex.get(normalize(livro.nome));
+      if (!abbrev) {
+        // try next attempt if the book name didn't match
+        continue;
+      }
 
-      // IMPORTANT: request minimal format so results are easy to parse
-      const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&data_format=minimal&reference=${encodeURIComponent(referencia)}`;
+      referencia = `${livro.nome} ${capitulo}:${versiculo}`;
+
+      // ABibliaDigital verse endpoint: /api/verses/{version}/{book}/{chapter}/{verse}
+      const url = `https://www.abibliadigital.com.br/api/verses/${encodeURIComponent(VERSION)}/${encodeURIComponent(abbrev)}/${capitulo}/${versiculo}`;
 
       try {
         const resp = await fetch(url);
@@ -109,17 +68,22 @@ export default {
 
         const data = await resp.json();
 
-        // minimal format: results.almeida_rc is an array of verse objects
-        texto = data?.results?.almeida_rc?.[0]?.text?.trim() ?? null;
-        
+        // ABibliaDigital commonly returns { text: "...", book: {...}, chapter: X, number: Y }
+        // Keep extraction robust in case format differs.
+        texto =
+          (typeof data?.text === "string" && data.text.trim()) ||
+          (typeof data?.verse?.text === "string" && data.verse.text.trim()) ||
+          (typeof data?.verses?.[0]?.text === "string" && data.verses[0].text.trim()) ||
+          null;
+
         if (texto) {
+          // KEEP your return style (JSON)
           return new Response(JSON.stringify({ referencia, texto }), {
             headers: { "Content-Type": "application/json" }
           });
         }
-        // if no text, loop again to try another random verse
       } catch (err) {
-        // keep your existing behavior: return the error immediately
+        // KEEP your behavior: return error immediately
         return new Response(JSON.stringify({ referencia, error: err.message }), {
           headers: { "Content-Type": "application/json" }
         });
@@ -127,7 +91,7 @@ export default {
     }
 
     if (!texto) {
-      referencia = "Erro";
+      referencia = "Provérbios 3:5";
       texto = "Erro";
     }
 
@@ -136,3 +100,13 @@ export default {
     });
   }
 };
+
+// helper to match names with accents/case differences
+function normalize(s) {
+  return (s || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
