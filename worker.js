@@ -74,7 +74,7 @@ export default {
     ];
 
     const now = new Date();
-    now.setDate(now.getDate() + 5);
+    now.setDate(now.getDate() + 3);
     const dayKey = new Intl.DateTimeFormat("en-CA", {
       timeZone: "America/New_York",
       year: "numeric",
@@ -128,7 +128,7 @@ export default {
     }
 
     if (!texto) {
-      referencia = "Provérbios 3:5";
+      referencia = "Erro";
       texto = "Erro";
     }
 
