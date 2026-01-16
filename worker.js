@@ -43,7 +43,7 @@ export default {
 
         // minimal format: results.almeida_rc is an array of verse objects
         texto = data?.results?.almeida_rc?.[0]?.text?.trim() ?? null;
-
+        console.log(texto);
         if (texto) {
           return new Response(JSON.stringify({ referencia, texto }), {
             headers: { "Content-Type": "application/json" }
