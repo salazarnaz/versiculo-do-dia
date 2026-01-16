@@ -74,7 +74,12 @@ export default {
     ];
 
     const now = new Date();
-    const dayKey = now.toISOString().slice(0, 10);
+    const dayKey = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(now);
 
     let seed = parseInt(dayKey.replace(/-/g, ""), 10);
 
