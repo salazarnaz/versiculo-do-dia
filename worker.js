@@ -6,6 +6,7 @@ export default {
       { nome: "Gênesis", caps: 50 },
       { nome: "Êxodo", caps: 40 },
       { nome: "Levítico", caps: 27 },
+      { nome: "Números", caps: 36 },
       { nome: "Deuteronômio", caps: 34 },
       { nome: "Josué", caps: 24 },
       { nome: "Juízes", caps: 21 },
@@ -73,7 +74,6 @@ export default {
     ];
 
     const now = new Date();
-    now.setDate(now.getDate() + 1);
     const dayKey = new Intl.DateTimeFormat("en-CA", {
       timeZone: "America/New_York",
       year: "numeric",
@@ -97,15 +97,15 @@ export default {
       const versiculo = next(40) + 1;
 
       // Use the random reference (or temporarily hardcode if you want to test)
-      referencia = ${livro.nome} ${capitulo}:${versiculo};
+      referencia = `${livro.nome} ${capitulo}:${versiculo}`;
       // referencia = "Provérbios 3:5"; // <- test line if you want
 
       // IMPORTANT: request minimal format so results are easy to parse
-      const url = https://api.biblesupersearch.com/api?bible=almeida_rc&data_format=minimal&reference=${encodeURIComponent(referencia)};
+      const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&data_format=minimal&reference=${encodeURIComponent(referencia)}`;
 
       try {
         const resp = await fetch(url);
-        if (!resp.ok) throw new Error(HTTP ${resp.status});
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
         const data = await resp.json();
 
