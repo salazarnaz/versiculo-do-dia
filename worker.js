@@ -32,20 +32,25 @@ export default {
       // escolhe versículo entre 1 e 40 (ajuste se quiser outro limite)
       const versiculo = next(40) + 1;
 
-      referencia = `${livro.nome} ${capitulo}:${versiculo}`;
-      const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
+   const referencia = 'Provérbios 3:5';
+const url = `https://api.biblesupersearch.com/api?bible=almeida_rc&reference=${encodeURIComponent(referencia)}`;
 
-      try {
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error(`status ${resp.status}`);
-        const data = await resp.json();
-
-        const entry = data?.results && Object.values(data.results)[0];
-        texto = entry?.text?.trim();
-        if (texto) break;
-      } catch {
-        // tenta novamente
-      }
+try {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const data = await resp.json();
+  // exemplo seguro de extração (ajuste se a API tiver outro formato)
+  const entry = data?.results && Object.values(data.results)[0];
+  const texto = entry?.text?.trim();
+  if (texto) {
+    return new Response(JSON.stringify({ referencia, texto }), { headers: { 'Content-Type': 'application/json' } });
+  } else {
+    // fallback quando não há texto
+    return new Response(JSON.stringify({ referencia, texto: 'Texto não encontrado' }), { headers: { 'Content-Type': 'application/json' } });
+  }
+} catch (err) {
+  return new Response(JSON.stringify({ referencia, error: err.message }), { headers: { 'Content-Type': 'application/json' } });
+}
     }
 
     if (!texto) {
