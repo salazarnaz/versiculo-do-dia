@@ -74,7 +74,6 @@ export default {
     ];
 
     const now = new Date();
-    now.setDate(now.getDate() + 3);
     const dayKey = new Intl.DateTimeFormat("en-CA", {
       timeZone: "America/New_York",
       year: "numeric",
