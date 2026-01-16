@@ -11,7 +11,6 @@ export default {
     ];
 
     const now = new Date();
-    now.setDate(now.getDate() + 1);
     const dayKey = now.toISOString().slice(0, 10);
 
     let seed = parseInt(dayKey.replace(/-/g, ""), 10);
@@ -44,7 +43,7 @@ export default {
 
         // minimal format: results.almeida_rc is an array of verse objects
         texto = data?.results?.almeida_rc?.[0]?.text?.trim() ?? null;
-        console.log(texto);
+        
         if (texto) {
           return new Response(JSON.stringify({ referencia, texto }), {
             headers: { "Content-Type": "application/json" }
