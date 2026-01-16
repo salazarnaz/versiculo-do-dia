@@ -11,6 +11,7 @@ export default {
     ];
 
     const now = new Date();
+    now.setDate(now.getDate() + 2);
     const dayKey = now.toISOString().slice(0, 10);
 
     let seed = parseInt(dayKey.replace(/-/g, ""), 10);
