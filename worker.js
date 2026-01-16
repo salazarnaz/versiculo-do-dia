@@ -6,7 +6,6 @@ export default {
       { nome: "Gênesis", caps: 50 },
       { nome: "Êxodo", caps: 40 },
       { nome: "Levítico", caps: 27 },
-      { nome: "Números", caps: 36 },
       { nome: "Deuteronômio", caps: 34 },
       { nome: "Josué", caps: 24 },
       { nome: "Juízes", caps: 21 },
